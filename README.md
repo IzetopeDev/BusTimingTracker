@@ -5,7 +5,7 @@
 It's a personal project to track the bus timings between my home and workplace. I did this as a personal proof that the bus timings were inconsistent. However, I also aim to use this project to make sense of the bus timings and leave my house a calculated time before it is expected to reach. 
 
 # Benefit to you
-## Head-Hunting
+## Understanding my portfolio
 I believe that this little project can show my ability in using Google AppScript to serve a function and purpose. I also believe that the project when viewed in tandem with newer more updated projects will reflect my approach to learning/doing programming.
 
 ## Learning Code
