@@ -1,3 +1,2 @@
 /BusTimingTracker-Files/*
-!/BusTimingTracker-Files/code.js
-
+!/BusTimingTracker-Files/code*
