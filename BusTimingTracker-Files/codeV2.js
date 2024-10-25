@@ -1,3 +1,6 @@
+// To comment out whenever doing testing. Because node_modules not pushed to google.
+//import "@types/google-apps-script"
+
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
 
@@ -9,15 +12,9 @@ const formUsrTimes = inputSheet.getRange("C2:C").getValues().filter((formUsrTime
 
 const varDates = varSheet.getRange("A5:A").getValues.filter((varDate) => {return varDate != ''})
 
-function CnvToDateStr(dateObject) {
-    // Err Handling: check if dateObject is a date
-    dateObject = new Date(dateObject)
-    return `${dateObject.getDate()}${dateObject.getMonth() + 1}${dateObject.getFullYear()}`
-}
-
 function GetIndexOfNewEntries() {
-    varDates = varDates.map((varDate) => {return CnvToDateStr(varDate)})
-    formDates = formDates.map((formDate) => {return CnvToDateStr(formDate)})
+    varDates = varDates.map((varDate) => {varDate = new Date(); return varDate.toLocaleDateString()})
+    formDates = formDates.map((formDate) => {formDate = new Date(); return formDate.toLocaleDateString()})
     
     if (varDates.length == 0) {
         return 2
@@ -28,6 +25,42 @@ function GetIndexOfNewEntries() {
 
     }
 }
+
+function CalUpNLowBounds(dataPoint, formTiming) {
+    dataPoint = new Date(dataPoint)
+    formTiming = new Date(formTiming)
+
+    console.log('dataPoint :>> ', dataPoint);
+    console.log('formTiming :>> ', formTiming);
+
+    let hourDiff = Math.abs(dataPoint.getHours() - formTiming.getHours())
+    let minDiff = Math.abs(dataPoint.getMinutes() - formTiming.getMinutes())
+
+    let diffInMin = hourDiff * 60 + minDiff
+    let percentageErr = () => {
+        if (diffInMin > 120) {
+            return 1
+        } else if (diffInMin == 0) {
+            return 0
+        } else {
+            return diffInMin/120
+        }
+    } 
+
+    console.log('percentageErr :>> ', percentageErr());
+
+    let dataPointInMin = dataPoint.getHours() * 60 + dataPoint.getMinutes()
+    let upperBoundInMin = dataPointInMin + dataPointInMin * percentageErr()
+    let lowerBoundInMin = dataPointInMin - dataPointInMin * percentageErr()
+    
+    function ToHHMM(valueInMin) {
+        return `${Math.floor(valueInMin / 60)}:${(valueInMin / 60 - Math.floor(valueInMin / 60)) * 60}`
+    }
+
+    return [ToHHMM(upperBoundInMin), ToHHMM(dataPointInMin), ToHHMM(lowerBoundInMin)]
+
+}
+
 
 
 
