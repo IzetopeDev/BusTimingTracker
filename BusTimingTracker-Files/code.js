@@ -1,3 +1,7 @@
+/*
+For reference only:
+
+
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
 let formTimeHour = []
@@ -221,7 +225,7 @@ function main() {
 }
 
 
-
+*/
 
 
 
