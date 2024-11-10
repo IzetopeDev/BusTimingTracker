@@ -1,4 +1,4 @@
-// To comment out whenever doing testing. Because node_modules not pushed to google.
+//To comment out whenever doing testing. Because node_modules not pushed to google.
 //import "@types/google-apps-script"
 
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
@@ -6,27 +6,30 @@ const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet
 
 const travelEvents = ['Leaving house', 'Boarding Bus', 'Reaching TTSB', 'Reaching RTTP']
 
-const formDates = inputSheet.getRange("A2:A").getValues().filter((formDate) => {return formDate != ''})
-const formEvents = inputSheet.getRange("B2:B").getValues().filter((formEvent) => {return formEvent != ''})
-const formUsrTimes = inputSheet.getRange("C2:C").getValues().filter((formUsrTimes) => {return formUsrTimes != ''})
+const formValues = {
+    Dates: inputSheet.getRange("A2:A").getValues().filter((formDate) => {return formDate != ''}),
+    TravelEvents: inputSheet.getRange("B2:B").getValues().filter((formEvent) => {return formEvent != ''}),
+    UsrTimes: inputSheet.getRange("C2:C").getValues().filter((formUsrTimes) => {return formUsrTimes != ''})
+}
 
-const varDates = varSheet.getRange("A5:A").getValues.filter((varDate) => {return varDate != ''})
+const varDates = varSheet.getRange("A5:A").getValues().filter((varDate) => {return varDate != ''})
 
-function GetIndexOfNewEntries() {
-    varDates = varDates.map((varDate) => {varDate = new Date(); return varDate.toLocaleDateString()})
-    formDates = formDates.map((formDate) => {formDate = new Date(); return formDate.toLocaleDateString()})
+function GetNewEntriesStartIndex() {
+    //gets the index of the first new entry in the array formDate. 
+    //a new entry is determined as the entry that is not already recorded in Var Sheet. 
     
-    if (varDates.length == 0) {
-        return 2
-
+    let varDateStrings = varDates.map((varDate) => {varDate = new Date(varDate); return varDate.toLocaleDateString()})
+    let formDateStrings = formValues.Dates.map((formDate) => {formDate = new Date(formDate); return formDate.toLocaleDateString()})
+    
+    if (varDateStrings.length != 0) { 
+        let lastVarDate = varDateStrings[varDateStrings.length - 1]
+        return parseInt(formDateStrings.lastIndexOf(lastVarDate)) + 1
     } else {
-        let lastVarDate = varDates[varDates.length - 1]
-        return parseInt(formDates.lastIndexOf(lastVarDate) + 3)
-
+        return 0
     }
 }
 
-function CalUpNLowBounds(dataPoint, formTiming) {
+function GetUpNLowBounds(dataPoint, formTiming) {
     dataPoint = new Date(dataPoint)
     formTiming = new Date(formTiming)
 
@@ -61,10 +64,55 @@ function CalUpNLowBounds(dataPoint, formTiming) {
 
 }
 
+function FillTables() {
+    let newEntries = {
+        StartIndex: GetNewEntriesStartIndex(), 
+        Dates:[], 
+        Timings:[], 
+        TravelEvents:[], 
+        UsrTimes:[]
+    }
+
+    formValues.Dates.forEach((formDate, i) => {if (i >= newEntries.StartIndex) {newEntries.Dates.push(formDate)}})
+    newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(); return newFormDate.toLocaleTimeString()})
+    formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
+    formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(formUsrTime)}})
+
+    /* 
+    // I geniunely have no idea what the below code is meant to do... 
+    let newUniqueDates = new Set(newFormDates)
+    for (i = 0; i < newFormDates.length; i++) {
+        varSheet.getRange(`A${5 + varDates.length + i}`).setValue(newUniqueDates[i])
+    }
+
+    for (i = 0; i < newFormDates.length; i++) {
+        let calUpNLowBounds = GetUpNLowBounds(newFormUsrTimes[i], newFormTimings[i])
+
+        const DataPoint = {
+            date: newFormDates[i],
+            travelEvent: newTravelEvents[i],
+            upperBound: calUpNLowBounds[0],
+            usrTime: calUpNLowBounds[1],
+            lowerBound: calUpNLowBounds[2]
+        }
+    }
+    */ 
+}
 
 
+function TestingGrounds() {
+    const formStartIndex = GetNewEntriesStartIndex()
+    let newFormDates = [], newTravelEvents = [], newFormUsrTimes = []
 
+    formDates.forEach((formDate, i) => {if (i >= formStartIndex) {newFormDates.push(formDate)}})
+    let newFormTimings = newFormDates.map((newFormDate) => {newFormDate = new Date(); return newFormDate.toLocaleTimeString()})
+    travelEvents.forEach((travelEvent, i) => {if (i >= formStartIndex) {newTravelEvents.push(travelEvent)}})
+    formUsrTimes.forEach((formUsrTime, i) => {if (i >= formStartIndex) {newFormUsrTimes.push(formUsrTime)}})
 
-
+    let newUniqueDates = new Set(newFormDates)
+    for (i = 0; i < newFormDates.length; i++) {
+        varSheet.getRange(`A${5 + varDates.length + i}`).setValue(newUniqueDates[i])
+    }
+}
 
 
