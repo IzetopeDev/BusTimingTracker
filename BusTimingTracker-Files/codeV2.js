@@ -77,6 +77,11 @@ function FillTables() {
     newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(); return newFormDate.toLocaleTimeString()})
     formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
     formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(formUsrTime)}})
+    
+    console.log('newEntries Object:>> ', newEntries);
+
+    uniqueDates = new Set(newEntries.Dates)
+
 
     /* 
     // I geniunely have no idea what the below code is meant to do... 
