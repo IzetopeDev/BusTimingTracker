@@ -1,5 +1,5 @@
 /*
-For reference only:
+//For reference only:
 
 
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")

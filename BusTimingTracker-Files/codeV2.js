@@ -1,5 +1,5 @@
 //To comment out whenever doing testing. Because node_modules not pushed to google.
-//import "@types/google-apps-script"
+import "@types/google-apps-script"
 
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
@@ -73,6 +73,17 @@ function FillTables() {
         UsrTimes:[]
     }
 
+    class NewVarValues {
+        constructor() {
+            this.StartRow =  varDates.length + 5
+            this.Dates = new Set(newEntries.Dates)
+        }
+
+        getRow(date) {
+            return this.Dates.indexOf(date) + this.StartRow + varDates.length
+        }
+    }
+
     formValues.Dates.forEach((formDate, i) => {if (i >= newEntries.StartIndex) {newEntries.Dates.push(formDate)}})
     newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(); return newFormDate.toLocaleTimeString()})
     formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
@@ -80,7 +91,6 @@ function FillTables() {
     
     console.log('newEntries Object:>> ', newEntries);
 
-    uniqueDates = new Set(newEntries.Dates)
 
 
     /* 
@@ -104,7 +114,7 @@ function FillTables() {
     */ 
 }
 
-
+/*
 function TestingGrounds() {
     const formStartIndex = GetNewEntriesStartIndex()
     let newFormDates = [], newTravelEvents = [], newFormUsrTimes = []
@@ -119,5 +129,4 @@ function TestingGrounds() {
         varSheet.getRange(`A${5 + varDates.length + i}`).setValue(newUniqueDates[i])
     }
 }
-
-
+*/
