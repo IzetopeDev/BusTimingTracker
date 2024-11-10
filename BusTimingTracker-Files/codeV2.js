@@ -4,21 +4,23 @@ import "@types/google-apps-script"
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
 
-const travelEvents = ['Leaving house', 'Boarding Bus', 'Reaching TTSB', 'Reaching RTTP']
-
 const formValues = {
     Dates: inputSheet.getRange("A2:A").getValues().filter((formDate) => {return formDate != ''}),
     TravelEvents: inputSheet.getRange("B2:B").getValues().filter((formEvent) => {return formEvent != ''}),
     UsrTimes: inputSheet.getRange("C2:C").getValues().filter((formUsrTimes) => {return formUsrTimes != ''})
 }
 
-const varDates = varSheet.getRange("A5:A").getValues().filter((varDate) => {return varDate != ''})
+const varValues = {
+    Dates: varSheet.getRange("A5:A").getValues().filter((varDate) => {return varDate != ''}),
+    TravelEvents: ['Leaving house', 'Boarding Bus', 'Reaching TTSB', 'Reaching RTTP']
+
+}
 
 function GetNewEntriesStartIndex() {
     //gets the index of the first new entry in the array formDate. 
     //a new entry is determined as the entry that is not already recorded in Var Sheet. 
     
-    let varDateStrings = varDates.map((varDate) => {varDate = new Date(varDate); return varDate.toLocaleDateString()})
+    let varDateStrings = varValues.Dates.map((varDate) => {varDate = new Date(varDate); return varDate.toLocaleDateString()})
     let formDateStrings = formValues.Dates.map((formDate) => {formDate = new Date(formDate); return formDate.toLocaleDateString()})
     
     if (varDateStrings.length != 0) { 
@@ -74,44 +76,40 @@ function FillTables() {
     }
 
     class NewVarValues {
-        constructor() {
-            this.StartRow =  varDates.length + 5
-            this.Dates = new Set(newEntries.Dates)
+        // I wanted to make an object that has functions...
+        static StartRow =  varValues.Dates.length + 5
+        static Dates = new Set(newEntries.Dates)
+        static TEColumns = ["B","E","H","K"]
+
+        //I can't use getRow() and getColumn() because those are methods in appscript
+        getYCoord(date) {
+            return this.Dates.indexOf(date) + this.StartRow + varValues.Dates.length
         }
 
-        getRow(date) {
-            return this.Dates.indexOf(date) + this.StartRow + varDates.length
+        getXCoord(travelEvent) {
+            return TEColumns[varValues.TravelEvents.indexOf(travelEvent)]
         }
     }
 
     formValues.Dates.forEach((formDate, i) => {if (i >= newEntries.StartIndex) {newEntries.Dates.push(formDate)}})
-    newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(); return newFormDate.toLocaleTimeString()})
+    newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(newFormDate); return newFormDate.toLocaleTimeString()})
+    // there may be issues with the never property              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
     formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
     formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(formUsrTime)}})
     
     console.log('newEntries Object:>> ', newEntries);
 
+    for (i = 0 ; i < newEntries.Dates.length; i) {
+        let dataPoint = {
+            Values: GetUpNLowBounds(newEntries.UsrTimes[i], newEntries.Timings[i]),
+            Date: newEntries.Dates[i],
+            TravelEvent: newEntries.TravelEvents[i]
+        }
 
-
-    /* 
-    // I geniunely have no idea what the below code is meant to do... 
-    let newUniqueDates = new Set(newFormDates)
-    for (i = 0; i < newFormDates.length; i++) {
-        varSheet.getRange(`A${5 + varDates.length + i}`).setValue(newUniqueDates[i])
-    }
-
-    for (i = 0; i < newFormDates.length; i++) {
-        let calUpNLowBounds = GetUpNLowBounds(newFormUsrTimes[i], newFormTimings[i])
-
-        const DataPoint = {
-            date: newFormDates[i],
-            travelEvent: newTravelEvents[i],
-            upperBound: calUpNLowBounds[0],
-            usrTime: calUpNLowBounds[1],
-            lowerBound: calUpNLowBounds[2]
+        for (x = 0; x < 3; x++){
+            varSheet.getRange(`${NewVarValues.getXCoord(dataPoint.TravelEvent)}${NewVarValues.getYCoord(dataPoint.Date)}`).offset(0,x).setValue(dataPoint.Values[x])
         }
     }
-    */ 
 }
 
 /*
@@ -126,7 +124,7 @@ function TestingGrounds() {
 
     let newUniqueDates = new Set(newFormDates)
     for (i = 0; i < newFormDates.length; i++) {
-        varSheet.getRange(`A${5 + varDates.length + i}`).setValue(newUniqueDates[i])
+        varSheet.getRange(`A${5 + varValues.Dates.length + i}`).setValue(newUniqueDates[i])
     }
 }
 */
