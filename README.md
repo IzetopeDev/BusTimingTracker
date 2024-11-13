@@ -1,5 +1,5 @@
 # !!NOTE!!
-This project is nowhere near complete just yet! There are still many things I'm exploring, learning, and experimenting with! Thus, do not be suprised when you enter the Google Sheets and see basically nothing...
+This project is nowhere near complete just yet! There are still many things I'm exploring, learning, and experimenting with! Thus, do not be surprised when you enter the Google Sheets and see basically nothing...
 
 # Bus Timing Tracker Link
 [Bus Timing Tracker](https://docs.google.com/spreadsheets/d/1Apb95Xw1qqeouJU-L0WIr8zJ_en52HqWy_jPBESWrog/edit?usp=sharing)

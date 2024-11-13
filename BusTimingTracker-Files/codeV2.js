@@ -75,41 +75,36 @@ function FillTables() {
         UsrTimes:[]
     }
 
-    formValues.Dates.forEach((formDate, i) => {if (i >= newEntries.StartIndex) {newEntries.Dates.push(formDate)}})
+    formValues.Dates.forEach((formDate, i) => {if (i >= newEntries.StartIndex) { formDate = new Date(formDate); newEntries.Dates.push(formDate)}})
     newEntries.Timings = newEntries.Dates.map((newFormDate) => {newFormDate = new Date(newFormDate); return newFormDate.toLocaleTimeString()})
     // there may be issues with the never property              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
     formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
     formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(formUsrTime)}})
     
-    console.log('newEntries Object:>> ', newEntries);
-    console.log('newEntries.Dates :>> ', newEntries.Dates);
-    console.log('new Set(newEntries.Dates) :>> ', new Set(newEntries.Dates));
-    console.log('Set(newEntries.Dates) :>> ', Set(newEntries.Dates));
+    function GetUniqueDates(rawDates) {
+        let output = []
+        
+        rawDates.forEach((raw, i) => {
+            let isMatch = false
+
+            output.forEach((stored, j) => {if (raw == stored) {isMatch = true; return}})
+
+            if (!isMatch){
+                output.push(raw)
+            } 
+        })
+
+        return output
+    }
 
     let newVarValues = {
-        getUniqueDates(rawDates) {
-            let output = []
-            
-            rawDates.forEach((raw, i) => {
-                let isMatch = false
-
-                output.forEach((stored, j) => {if (raw == stored) {isMatch = true; return}})
-
-                if (!isMatch){
-                    output.push(raw)
-                } 
-            })
-
-            return output
-        },
-
         StartRow: varValues.Dates.length + 5,
-        Dates: this.getUniqueDates(),
+        Dates: GetUniqueDates(newEntries.Dates).map((dateStr) => {dateStr = new Date(dateStr); return `${dateStr.getMonth()}/${dateStr.getDate()}/${dateStr.getFullYear()}`}),
         TEColumns: ["B","E","H","K"],
 
         //I can't use getRow() and getColumn() because those are methods in appscript
         getYCoord(date) {
-            return this.Dates.indexOf(date) + this.StartRow + varValues.Dates.length
+            return this.Dates.indexOf(date) + this.StartRow
         },
 
         getXCoord(travelEvent) {
