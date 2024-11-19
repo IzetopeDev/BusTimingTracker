@@ -4,6 +4,18 @@
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
 
+const formValues = {
+    DateNTimes: inputSheet.getRange("A2:A").getValues().filter((formDate) => {return formDate != ''}),
+    TravelEvents: inputSheet.getRange("B2:B").getValues().filter((formEvent) => {return formEvent != ''}),
+    UsrTimes: inputSheet.getRange("C2:C").getValues().filter((formUsrTimes) => {return formUsrTimes != ''})
+}
+
+const varValues = {
+    Dates: varSheet.getRange("A5:A").getValues().filter((varDate) => {return varDate != ''}),
+    TravelEvents: ['Leaving house', 'Boarding Bus', 'Reaching TTSB', 'Reaching RTTP']
+}
+
+
 const CustCnvTo = {
     MMDDYYYY(dateStr = "") {
         console.log(`CustCnvTo.MMDDYYYY called | dateStr = ${dateStr}`)
@@ -41,18 +53,6 @@ const CustCnvTo = {
 
         return `${HH}:${MM}`
     }
-}
-
-const formValues = {
-    DateNTimes: inputSheet.getRange("A2:A").getValues().filter((formDate) => {return formDate != ''}),
-    TravelEvents: inputSheet.getRange("B2:B").getValues().filter((formEvent) => {return formEvent != ''}),
-    UsrTimes: inputSheet.getRange("C2:C").getValues().filter((formUsrTimes) => {return formUsrTimes != ''})
-}
-
-const varValues = {
-    Dates: varSheet.getRange("A5:A").getValues().filter((varDate) => {return varDate != ''}),
-    TravelEvents: ['Leaving house', 'Boarding Bus', 'Reaching TTSB', 'Reaching RTTP']
-
 }
 
 function GetNewEntriesStartIndex() {
@@ -94,8 +94,9 @@ function GetUpNLowBounds(dataPoint = "", formTiming = "") {
     console.log('percentageErr :>> ', percentageErr());
 
     let dataPointInMin = dataPoint.getHours() * 60 + dataPoint.getMinutes()
-    let upperBoundInMin = dataPointInMin + dataPointInMin * percentageErr()
-    let lowerBoundInMin = dataPointInMin - dataPointInMin * percentageErr()
+    let upperBoundInMin = dataPointInMin + 30 * percentageErr()
+    let lowerBoundInMin = dataPointInMin - 30 * percentageErr()
+    // set to be 30 min max error. 
 
     return [CustCnvTo.HHMM(upperBoundInMin), CustCnvTo.HHMM(dataPointInMin), CustCnvTo.HHMM(lowerBoundInMin)]
 
@@ -165,6 +166,8 @@ function FillTables() {
         for (let x = 0; x < 3; x++) {
             varSheet.getRange(`${newVarValues.getXCoord(dataPoint.TravelEvent[0])}${newVarValues.getYCoord(dataPoint.Date)}`).offset(0,x).setValue(dataPoint.Values[x])
         }
+
+        varSheet.getRange(`A${newVarValues.getYCoord(dataPoint.Date)}`).setValue(dataPoint.Date)
     }
 }
 
