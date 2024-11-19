@@ -4,18 +4,37 @@
 const inputSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Form Responses 1")
 const varSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Var Sheet")
 
-const CustDateTo = {
+const CustCnvTo = {
     MMDDYYYY(dateStr = "") {
+        console.log(`CustCnvTo.MMDDYYYY called | dateStr = ${dateStr}`)
+
         dateStr = new Date(dateStr)
         return `${dateStr.getMonth() + 1}/${dateStr.getDate()}/${dateStr.getFullYear()}` 
         //the +1 for month is because either JS or AppScript uses a 0 index for months (but not dates)
     },
 
-    HHMM(dateStr = "") {
-        dateStr = new Date(dateStr)
-        let HH = dateStr.getHours()
-        let MM = dateStr.getMinutes()
+    HHMM(inputDate) {
+        console.log(`CustCnvTo.HHMM called | inputDate = ${inputDate}`)
 
+        let HH = 0
+        let MM = 0
+
+        switch (typeof(inputDate)) {
+            case "string":
+                dateStr = new Date(inputDate)
+                HH = dateStr.getHours()
+                MM = dateStr.getMinutes()
+                break
+
+            case "number":
+                HH = Math.floor(inputDate / 60)
+                MM = Math.floor((inputDate / 60 - HH) * 60)    
+                break
+                
+            default:
+                console.log("ERR: in Obj CustCnvTo.HHMM(), param inputDate type is outside scope!")            
+        }
+      
         // converting into string so that when filled into varSheet, it is recognised as a time of day 
         if (HH < 10) {HH = `0${HH}`} else {HH = `${HH}`}
         if (MM < 10) {MM = `0${MM}`} else {MM = `${MM}`}
@@ -39,9 +58,10 @@ const varValues = {
 function GetNewEntriesStartIndex() {
     //gets the index of the first new entry in the array formDate. 
     //a new entry is determined as the entry that is not already recorded in Var Sheet. 
+    console.log(`GetNewEntriesStartIndex called`)
     
-    let varDateStrings = varValues.Dates.map((varDate) => {varDate = new Date(varDate); return CustDateTo.MMDDYYYY(varDate)})
-    let formDateStrings = formValues.DateNTimes.map((formDate) => {formDate = new Date(formDate); return CustDateTo.MMDDYYYY(formDate)})
+    let varDateStrings = varValues.Dates.map((varDate) => {varDate = new Date(varDate); return CustCnvTo.MMDDYYYY(varDate)})
+    let formDateStrings = formValues.DateNTimes.map((formDate) => {formDate = new Date(formDate); return CustCnvTo.MMDDYYYY(formDate)})
     
     if (varDateStrings.length != 0) { 
         let lastVarDate = varDateStrings[varDateStrings.length - 1]
@@ -52,11 +72,10 @@ function GetNewEntriesStartIndex() {
 }
 
 function GetUpNLowBounds(dataPoint = "", formTiming = "") {
+    console.log(`GetUpNLowBounds called | dataPoint = ${dataPoint}, formTiming = ${formTiming}`)
+
     dataPoint = new Date(dataPoint)
     formTiming = new Date(formTiming)
-
-    console.log('dataPoint :>> ', dataPoint);
-    console.log('formTiming :>> ', formTiming);
 
     let hourDiff = Math.abs(dataPoint.getHours() - formTiming.getHours())
     let minDiff = Math.abs(dataPoint.getMinutes() - formTiming.getMinutes())
@@ -77,16 +96,14 @@ function GetUpNLowBounds(dataPoint = "", formTiming = "") {
     let dataPointInMin = dataPoint.getHours() * 60 + dataPoint.getMinutes()
     let upperBoundInMin = dataPointInMin + dataPointInMin * percentageErr()
     let lowerBoundInMin = dataPointInMin - dataPointInMin * percentageErr()
-    
-    function ToHHMM(valueInMin = 0) {
-        return `${Math.floor(valueInMin / 60)}:${(valueInMin / 60 - Math.floor(valueInMin / 60)) * 60}`
-    }
 
-    return [ToHHMM(upperBoundInMin), ToHHMM(dataPointInMin), ToHHMM(lowerBoundInMin)]
+    return [CustCnvTo.HHMM(upperBoundInMin), CustCnvTo.HHMM(dataPointInMin), CustCnvTo.HHMM(lowerBoundInMin)]
 
 }
 
 function FillTables() {
+    console.log(`FillTables called`)
+
     let newEntries = {
         StartIndex: GetNewEntriesStartIndex(), 
         Dates:[], 
@@ -97,18 +114,20 @@ function FillTables() {
 
     formValues.DateNTimes.forEach((formData, i) => {if (i >= newEntries.StartIndex) { 
         formData = new Date(formData); 
-        newEntries.Dates.push(CustDateTo.MMDDYYYY(formData)); 
-        newEntries.Timings.push(CustDateTo.HHMM(formData))
+        newEntries.Dates.push(CustCnvTo.MMDDYYYY(formData)); 
+        newEntries.Timings.push(formData) // CustCnvTo.HHMM() unused because GetUpNLowBounds requires date string
     }})
     formValues.TravelEvents.forEach((travelEvent, i) => {if (i >= newEntries.StartIndex) {newEntries.TravelEvents.push(travelEvent)}})
-    formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(CustDateTo.HHMM(formUsrTime))}})
+    formValues.UsrTimes.forEach((formUsrTime, i) => {if (i >= newEntries.StartIndex) {newEntries.UsrTimes.push(formUsrTime)}}) // CustCnvTo.HHMM() unused because GetUpNLowBounds requires date string
     
 
     function GetUniqueDates(rawDates = "") {
+        console.log(`GetUniqueDates called | rawDates = ${rawDates}`)
+
         let output = []
 
         rawDates.forEach((raw) => {
-            raw = CustDateTo.MMDDYYYY(raw)
+            raw = CustCnvTo.MMDDYYYY(raw)
             
             let isMatch = false
             output.forEach((stored) => {if (raw == stored) {isMatch = true}})
@@ -136,15 +155,15 @@ function FillTables() {
 
     console.log('var newVarValues :>> ', newVarValues);
 
-    for (let i = 0 ; i < newEntries.Dates.length; i) {
+    for (let i = 0 ; i < newEntries.Dates.length; i++) {
         let dataPoint = {
             Values: GetUpNLowBounds(newEntries.UsrTimes[i], newEntries.Timings[i]),
             Date: newEntries.Dates[i],
             TravelEvent: newEntries.TravelEvents[i]
         }
 
-        for (x = 0; x < 3; x++){
-            varSheet.getRange(`${newVarValues.getXCoord(dataPoint.TravelEvent)}${newVarValues.getYCoord(dataPoint.Date)}`).offset(0,x).setValue(dataPoint.Values[x])
+        for (let x = 0; x < 3; x++) {
+            varSheet.getRange(`${newVarValues.getXCoord(dataPoint.TravelEvent[0])}${newVarValues.getYCoord(dataPoint.Date)}`).offset(0,x).setValue(dataPoint.Values[x])
         }
     }
 }
